@@ -1,0 +1,10 @@
+# dsh-time-memory 的插件行：一个 Host 插件同时提供自动归档、人格提示词和两个工具。
+- insert:
+    - id: time-memory
+      name: dsh-time-memory
+      config:
+        capture: true
+        expandFactor: 3
+        maxExpansions: 2
+        maxResults: 3
+        maxTextChars: 300

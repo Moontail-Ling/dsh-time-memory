@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Time Memory",
+    "description": "Archives chat turns as time-stamped memories. Recalls the named period first, widens twice at most, then answers \"I forgot\"."
+  }
+}

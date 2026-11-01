@@ -1,0 +1,14 @@
+node_modules/
+*.log
+
+# QQ 专属 bot：含本机绝对路径与个人化认知文件，不进公开仓库
+qqbot/
+
+# 测试产物
+test/last-run.json
+test/measure.json
+
+# 系统杂项
+.DS_Store
+Thumbs.db
+desktop.ini
