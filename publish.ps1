@@ -87,34 +87,50 @@ if ($LASTEXITCODE -ne 0) {
 
 # 4) create or push
 $gh = Get-Command gh -ErrorAction SilentlyContinue
+$ghReady = $false
 if ($gh) {
   gh auth status 2>$null | Out-Null
+  if ($LASTEXITCODE -eq 0) { $ghReady = $true }
+}
+
+# Work out where to push. An explicit -RepoUrl always wins and never creates.
+$target = $RepoUrl
+if ($target -eq '' -and $ghReady) {
+  $login = gh api user --jq .login 2>$null
+  if ($LASTEXITCODE -eq 0 -and $login) { $target = "https://github.com/$login/$Name.git" }
+}
+
+# Only try to create when the caller did not name an existing repository.
+if ($ghReady -and $RepoUrl -eq '') {
+  gh repo create $Name "--$Visibility" --description $Description --source . --remote origin --push 2>$null
   if ($LASTEXITCODE -eq 0) {
-    gh repo create $Name "--$Visibility" --description $Description --source . --remote origin --push
-    if ($LASTEXITCODE -ne 0) { throw 'gh repo create failed (a common cause: the repository name already exists)' }
     foreach ($topic in $Topics) {
       gh repo edit "--add-topic=$topic" 2>$null | Out-Null
     }
-    $url = gh repo view --json url -q .url
-    Write-Host "[4/4] done: $url"
+    Write-Host "[4/4] created: $(gh repo view --json url -q .url)"
     exit 0
   }
-  Write-Warning 'gh is installed but not logged in (run: gh auth login). Falling back to the manual flow.'
-} else {
-  Write-Warning 'gh (GitHub CLI) not found. Falling back to the manual flow.'
+  Write-Warning 'gh repo create failed (the repository probably already exists). Falling back to a plain push.'
+} elseif (-not $ghReady) {
+  Write-Warning 'gh (GitHub CLI) is missing or not logged in. Falling back to a plain push.'
 }
 
-if ($RepoUrl -ne '') {
+if ($target -ne '') {
   git remote remove origin 2>$null
-  git remote add origin $RepoUrl
-  Write-Host "[4/4] pushing to $RepoUrl ..."
+  git remote add origin $target
+  Write-Host "[4/4] pushing to $target ..."
   git push -u origin main
   if ($LASTEXITCODE -ne 0) {
     throw 'push failed: if the remote already has commits, run "git pull --rebase origin main" and retry; otherwise check your GitHub credentials.'
   }
-  Write-Host "[4/4] done: $RepoUrl"
-  Write-Host ''
-  Write-Host 'Last step: paste the Description and Topics into the repo About panel.'
+  if ($ghReady) {
+    # Do not overwrite the repo description the owner may have set by hand; only fill in topics.
+    foreach ($topic in $Topics) {
+      gh repo edit "--add-topic=$topic" 2>$null | Out-Null
+    }
+    Write-Host '[4/4] topics updated via gh'
+  }
+  Write-Host "[4/4] done: $target"
   exit 0
 }
 
@@ -127,7 +143,3 @@ Write-Host '     git push -u origin main'
 Write-Host ''
 Write-Host 'Or re-run with -RepoUrl to let this script push for you:'
 Write-Host "     .\publish.cmd -Visibility $Visibility -RepoUrl https://github.com/<your-user>/$Name.git"
-Write-Host ''
-Write-Host 'For the fully automatic path, install and log in to gh once:'
-Write-Host '     winget install --id GitHub.cli -e'
-Write-Host '     gh auth login'
