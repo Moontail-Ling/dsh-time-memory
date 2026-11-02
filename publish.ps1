@@ -26,7 +26,10 @@ param(
   [switch]$Help
 )
 
-$ErrorActionPreference = 'Stop'
+# 'Continue' on purpose: Windows PowerShell turns a native command's stderr into a
+# terminating error when the preference is 'Stop', which would abort on harmless
+# messages such as "No such remote". Every step below checks $LASTEXITCODE itself.
+$ErrorActionPreference = 'Continue'
 
 if ($Help) {
   Get-Help $PSCommandPath -Detailed
@@ -116,8 +119,14 @@ if ($ghReady -and $RepoUrl -eq '') {
 }
 
 if ($target -ne '') {
-  git remote remove origin 2>$null
-  git remote add origin $target
+  # git config exits 1 without writing to stderr when the key is missing,
+  # so this is the one safe way to ask "is there an origin remote?".
+  git config --get remote.origin.url | Out-Null
+  if ($LASTEXITCODE -eq 0) {
+    git remote set-url origin $target
+  } else {
+    git remote add origin $target
+  }
   Write-Host "[4/4] pushing to $target ..."
   git push -u origin main
   if ($LASTEXITCODE -ne 0) {
