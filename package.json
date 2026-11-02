@@ -1,11 +1,19 @@
 {
   "name": "dsh-time-memory",
   "version": "0.1.0",
-  "private": true,
-  "description": "按时间归档、分层回忆的聊天记忆插件：先检索用户指认的时段，未命中自动扩大两次，仍无结果就回答「忘记了」。",
+  "description": "按时间归档、分层回忆的聊天记忆插件；未命中扩大两次，仍没有就如实说「我忘记了」。Time-ordered chat memory with layered recall and honest forgetting.",
   "type": "module",
   "main": "index.js",
   "icon": "./icon.svg",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Moontail-Ling/dsh-time-memory.git"
+  },
+  "homepage": "https://github.com/Moontail-Ling/dsh-time-memory#readme",
+  "bugs": {
+    "url": "https://github.com/Moontail-Ling/dsh-time-memory/issues"
+  },
+  "author": "Moontail-Ling",
   "exports": {
     ".": "./index.js",
     "./locale/*.json": "./locale/*.json",
